@@ -1,11 +1,14 @@
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
   Dimensions,
   Pressable,
+  RefreshControl,
   ScrollView,
   StatusBar,
   View
@@ -13,6 +16,8 @@ import {
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './HomePage.styles';
+import { QuickActionSkeleton, AppointmentCardSkeleton } from '@/components/common/SkeletonLoader';
+import { EmptyState } from '@/components/common/EmptyState';
 
 const { width } = Dimensions.get('window');
 
@@ -20,7 +25,6 @@ interface QuickActionCard {
   id: string;
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
-  subtitle: string;
   colors: [string, string];
   onPress: () => void;
 }
@@ -39,17 +43,15 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export default function HomePage() {
   const { user, logout } = useAuth();
   const [greeting, setGreeting] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const slideAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     console.log('HomePage mounted', user);
-
-    // Set greeting based on time of day
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Доброе утро');
-    else if (hour < 18) setGreeting('Добрый день');
-    else setGreeting('Добрый вечер');
+    updateGreeting();
+    loadInitialData();
 
     // Entrance animation
     Animated.parallel([
@@ -67,12 +69,40 @@ export default function HomePage() {
     ]).start();
   }, []);
 
+  const loadInitialData = async () => {
+    // Simulate initial data loading
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsLoading(false);
+  };
+
+  const updateGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Доброе утро');
+    else if (hour < 18) setGreeting('Добрый день');
+    else setGreeting('Добрый вечер');
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Simulate data refresh
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    updateGreeting();
+
+    setRefreshing(false);
+  };
+
+  const handleActionPress = (action: QuickActionCard) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    action.onPress();
+  };
+
   const quickActions: QuickActionCard[] = [
     {
       id: 'video',
       icon: 'videocam',
-      title: 'Видео',
-      subtitle: 'Консультация',
+      title: 'Видео звонок',
       colors: ['#3772ff', '#2c5bcc'],
       onPress: () => console.log('Video consultation'),
     },
@@ -80,23 +110,20 @@ export default function HomePage() {
       id: 'home',
       icon: 'home',
       title: 'Вызов на дом',
-      subtitle: 'Врач домой',
       colors: ['#283353', '#202942'],
       onPress: () => console.log('Home visit'),
     },
     {
       id: 'medical-history',
       icon: 'medical',
-      title: 'Мед. история',
-      subtitle: 'История болезней',
+      title: 'Мед. карта',
       colors: ['#3772ff', '#3267e6'],
       onPress: () => console.log('Medical history'),
     },
     {
       id: 'med-tourism',
       icon: 'airplane',
-      title: 'Мед Туризм',
-      subtitle: 'Лечение за рубежом',
+      title: 'Туризм',
       colors: ['#2956bf', '#214499'],
       onPress: () => console.log('Med tourism'),
     },
@@ -104,7 +131,6 @@ export default function HomePage() {
       id: 'documents',
       icon: 'document-text',
       title: 'Документы',
-      subtitle: 'Мед. документы',
       colors: ['#3772ff', '#2c5bcc'],
       onPress: () => console.log('Documents'),
     },
@@ -112,7 +138,6 @@ export default function HomePage() {
       id: 'activity',
       icon: 'refresh',
       title: 'Активность',
-      subtitle: 'История',
       colors: ['#283353', '#202942'],
       onPress: () => console.log('Activity'),
     },
@@ -143,6 +168,14 @@ export default function HomePage() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#3772ff"
+            colors={['#3772ff']}
+          />
+        }
       >
         {/* Header Section */}
         <Animated.View
@@ -160,7 +193,7 @@ export default function HomePage() {
               <Text style={styles.userName}>{user?.name || 'Пользователь'}</Text>
             </View>
 
-            <Pressable onPress={() => console.log('Navigate to profile')} style={styles.avatarContainer}>
+            <Pressable onPress={() => router.push('/profile')} style={styles.avatarContainer}>
               <LinearGradient
                 colors={['#3772ff', '#2c5bcc']}
                 style={styles.avatar}
@@ -168,8 +201,8 @@ export default function HomePage() {
                 end={{ x: 1, y: 1 }}
               >
                 <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
-                <View style={styles.onlineDot} />
               </LinearGradient>
+              <View style={styles.onlineDot} />
             </Pressable>
           </View>
 
@@ -185,54 +218,67 @@ export default function HomePage() {
           <Text style={styles.sectionTitle}>Быстрые действия</Text>
           <View style={styles.quickActionsContainer}>
             <View style={styles.quickActionsGrid}>
-              {quickActions.map((action, index) => (
-                <Pressable
-                  key={action.id}
-                  onPress={action.onPress}
-                  style={({ pressed }) => [
-                    styles.quickActionCard,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
-                >
-                  <LinearGradient
-                    colors={action.colors}
-                    style={styles.quickActionGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+              {isLoading ? (
+                // Show skeleton loaders while loading
+                Array.from({ length: 6 }).map((_, index) => (
+                  <QuickActionSkeleton key={`skeleton-${index}`} />
+                ))
+              ) : (
+                // Show actual quick actions
+                quickActions.map((action, index) => (
+                  <Pressable
+                    key={action.id}
+                    onPress={() => handleActionPress(action)}
+                    style={({ pressed }) => [
+                      styles.quickActionCard,
+                      { opacity: pressed ? 0.8 : 1 },
+                    ]}
                   >
-                    <View style={styles.quickActionIcon}>
-                      <Ionicons name={action.icon} size={28} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.quickActionTextContainer}>
-                      <Text style={styles.quickActionTitle}>{action.title}</Text>
-                      <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
-                    </View>
-                  </LinearGradient>
-                </Pressable>
-              ))}
+                    <LinearGradient
+                      colors={action.colors}
+                      style={styles.quickActionGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <View style={styles.quickActionIcon}>
+                        <Ionicons name={action.icon} size={26} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.quickActionTextContainer}>
+                        <Text style={styles.quickActionTitle}>{action.title}</Text>
+                      </View>
+                    </LinearGradient>
+                  </Pressable>
+                ))
+              )}
             </View>
           </View>
         </View>
 
         {/* Upcoming Appointments */}
-        {upcomingAppointments.length > 0 && (
-          <Animated.View
-            style={[
-              styles.section,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Ближайшие приемы</Text>
-              <Pressable>
-                <Text style={styles.seeAllText}>Все</Text>
-              </Pressable>
-            </View>
+        <Animated.View
+          style={[
+            styles.section,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Ближайшие приемы</Text>
+            <Pressable>
+              <Text style={styles.seeAllText}>Все</Text>
+            </Pressable>
+          </View>
 
-            {upcomingAppointments.map((appointment) => (
+          {isLoading ? (
+            // Show skeleton loaders while loading
+            Array.from({ length: 2 }).map((_, index) => (
+              <AppointmentCardSkeleton key={`appointment-skeleton-${index}`} />
+            ))
+          ) : upcomingAppointments.length > 0 ? (
+            // Show actual appointments
+            upcomingAppointments.map((appointment) => (
               <Pressable key={appointment.id} style={styles.appointmentCard}>
                 <View style={styles.appointmentIcon}>
                   <LinearGradient
@@ -266,9 +312,21 @@ export default function HomePage() {
 
                 <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
               </Pressable>
-            ))}
-          </Animated.View>
-        )}
+            ))
+          ) : (
+            // Show empty state when no appointments
+            <EmptyState
+              icon="calendar-outline"
+              title="Нет запланированных приемов"
+              message="У вас пока нет предстоящих визитов к врачу"
+              actionText="Записаться на прием"
+              onAction={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                console.log('Book appointment');
+              }}
+            />
+          )}
+        </Animated.View>
 
         {/* Health Stats */}
         <Animated.View

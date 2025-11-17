@@ -1,8 +1,8 @@
 import { StyleSheet, Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
-// Calculate card width: screen width - horizontal padding (40px) - margins between cards (12px)
-const cardWidth = (width - 40 - 12) / 2;
+// Calculate card width for 3 columns: screen width - horizontal padding (40px) - margins between cards (24px for 2 gaps)
+const cardWidth = (width - 40 - 24) / 3;
 
 export const styles = StyleSheet.create({
   container: {
@@ -136,29 +136,29 @@ export const styles = StyleSheet.create({
     elevation: 5,
   },
   quickActionGradient: {
-    padding: 18,
-    height: 160,
-    justifyContent: 'flex-start',
+    padding: 12,
+    height: 110,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   quickActionTextContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   quickActionTitle: {
-    fontSize: 15,
+    fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 4,
-    lineHeight: 20,
+    textAlign: 'center',
+    lineHeight: 14,
   },
   quickActionSubtitle: {
     fontSize: 12,

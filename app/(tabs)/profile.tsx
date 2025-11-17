@@ -114,17 +114,19 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <LinearGradient
-            colors={['#3772ff', '#2c5bcc']}
-            style={styles.avatarLarge}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Text style={styles.avatarLargeText}>{user?.name?.charAt(0) || 'U'}</Text>
+          <View style={{ position: 'relative' }}>
+            <LinearGradient
+              colors={['#3772ff', '#2c5bcc']}
+              style={styles.avatarLarge}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Text style={styles.avatarLargeText}>{user?.name?.charAt(0) || 'U'}</Text>
+            </LinearGradient>
             <Pressable style={styles.editAvatarButton}>
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </Pressable>
-          </LinearGradient>
+          </View>
 
           <Text style={styles.userName}>{user?.name || 'Пользователь'}</Text>
           <Text style={styles.userEmail}>{user?.email || 'email@example.com'}</Text>

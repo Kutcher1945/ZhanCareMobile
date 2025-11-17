@@ -4,6 +4,8 @@
     "strict": true,
     "jsx": "react-native",
     "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@/*": [
         "./*"
