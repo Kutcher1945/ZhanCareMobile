@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import {
   ActivityIndicator,
   Alert,
@@ -51,6 +52,7 @@ export default function LoginScreen() {
   const theme = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     const newErrors = { email: '', password: '' };
@@ -83,6 +85,13 @@ export default function LoginScreen() {
 
     try {
       const user = await loginUser(email, password);
+
+      // Update AuthContext
+      await login({
+        id: user.id || '1',
+        name: user.first_name || user.name || 'User',
+        email: user.email || email,
+      });
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('🎉 Успех', `Добро пожаловать, ${user.first_name || ''}!`);

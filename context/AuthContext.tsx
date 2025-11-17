@@ -1,23 +1,80 @@
-import React, { createContext, useContext, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import LoadingScreen from '@/components/screens/LoadingScreen';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+}
 
 const AuthContext = createContext<{
   isAuthenticated: boolean;
-  login: () => void;
+  user: User | null;
+  login: (userData: User) => void;
   logout: () => void;
 }>({
   isAuthenticated: false,
+  user: null,
   login: () => {},
   logout: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = () => setIsAuthenticated(true);
-  const logout = () => setIsAuthenticated(false);
+  useEffect(() => {
+    checkAuthState();
+  }, []);
+
+  const checkAuthState = async () => {
+    const startTime = Date.now();
+    const minLoadingTime = 2000; // Minimum 2 seconds loading screen
+
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const userData = await AsyncStorage.getItem('user');
+
+      if (token && userData) {
+        setIsAuthenticated(true);
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.log('Error checking auth state:', error);
+    } finally {
+      // Ensure loading screen shows for at least minLoadingTime
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = minLoadingTime - elapsedTime;
+
+      if (remainingTime > 0) {
+        setTimeout(() => setIsLoading(false), remainingTime);
+      } else {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const login = async (userData: User) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const logout = async () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'user']);
+  };
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

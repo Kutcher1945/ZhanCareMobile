@@ -5,12 +5,12 @@ import * as Sentry from '@sentry/react-native';
 import axios from 'axios';
 import { logoutUser } from './auth'; // Define yourself: clears tokens, navigates to login
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL || 'https://zhancareai-back.vercel.app/api/v1';
+const baseURL = process.env.EXPO_PUBLIC_API_URL || 'https://exp-admin.smartalmaty.kz/api/v1';
 
 const api = axios.create({
   baseURL,
   timeout: 10000,
-  paramsSerializer: (params) => new URLSearchParams(params).toString(),
+  paramsSerializer: (params) => new URLSearchParams(params).toString(), 
 });
 
 // Request interceptor — add access token
