@@ -31,12 +31,20 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't try to refresh token for auth endpoints (login, register, refresh)
+    const authEndpoints = ['/auth/login/', '/auth/register/', '/auth/refresh/'];
+    const isAuthEndpoint = authEndpoints.some(endpoint => originalRequest.url?.includes(endpoint));
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
         const refresh_token = await AsyncStorage.getItem('refresh_token');
-        if (!refresh_token) throw new Error('No refresh token found.');
+        if (!refresh_token) {
+          // No refresh token available, redirect to login
+          logoutUser('⏳ Ваша сессия истекла. Пожалуйста, войдите снова.');
+          return Promise.reject(error);
+        }
 
         const { data } = await axios.post(`${baseURL}/auth/refresh/`, {
           refresh_token,
@@ -54,15 +62,17 @@ api.interceptors.response.use(
       }
     }
 
-    // Report to Sentry
-    Sentry.captureException(error, {
-      extra: {
-        status: error.response?.status,
-        method: error.config?.method,
-        url: error.config?.url,
-        data: error.response?.data,
-      },
-    });
+    // Report to Sentry (but not for auth failures on login/register)
+    if (!isAuthEndpoint || error.response?.status !== 401) {
+      Sentry.captureException(error, {
+        extra: {
+          status: error.response?.status,
+          method: error.config?.method,
+          url: error.config?.url,
+          data: error.response?.data,
+        },
+      });
+    }
 
     return Promise.reject(error);
   }

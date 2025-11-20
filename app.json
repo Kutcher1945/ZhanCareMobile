@@ -9,13 +9,17 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/icons/ios/AppIcon@2x.png",
+      "bundleIdentifier": "com.dylazxc.ZhanCareMobile"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/icons/android/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+        "backgroundImage": "./assets/icons/android/res/mipmap-xxxhdpi/ic_launcher_background.png",
         "backgroundColor": "#ffffff"
       },
+      "icon": "./assets/icons/android/play_store_512.png",
       "edgeToEdgeEnabled": true,
       "package": "com.dylazxc.ZhanCareMobile"
     },
@@ -36,7 +40,8 @@
         }
       ],
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true
@@ -45,7 +50,11 @@
       "router": {},
       "eas": {
         "projectId": "331aa956-92ab-409f-8d62-f1263720a07d"
-      }
+      },
+      "apiUrl": "https://exp-admin.smartalmaty.kz/api/v1",
+      "wsUrl": "wss://exp-admin.smartalmaty.kz/ws",
+      "livekitUrl": "wss://zhancare-4yvomh3h.livekit.cloud",
+      "livekitApiKey": "APIsH5RHgRW6vdD"
     }
   }
 }

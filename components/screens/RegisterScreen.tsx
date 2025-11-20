@@ -2,25 +2,25 @@ import api from '@/utils/api';
 import i18n from '@/utils/i18n';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import {
     ActivityIndicator,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
     ScrollView,
     Text,
     TextInput,
-    useColorScheme,
     View,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import * as Animatable from 'react-native-animatable';
 import { Checkbox } from 'react-native-paper';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { styles } from './RegisterScreen.styles';
 
 type FormFields = {
@@ -37,8 +37,7 @@ type I18nKeys = keyof typeof i18n.translations['ru'];
 export default function RegisterScreen() {
   const t = i18n.t;
   const router = useRouter();
-  const isDark = useColorScheme() === 'dark';
-  const theme = useTheme();
+  const { login } = useAuth();
 
   const [form, setForm] = useState<FormFields>({
     first_name: '',
@@ -50,12 +49,19 @@ export default function RegisterScreen() {
   });
 
   const [secureText, setSecureText] = useState(true);
+  const [secureConfirmText, setSecureConfirmText] = useState(true);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState('');
   const [checked, setChecked] = useState(false);
   const [locale, setLocale] = useState(i18n.locale);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormFields | 'agreement', string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormFields | 'agreement' | 'general', string>>>({});
   const [shake, setShake] = useState<Partial<Record<keyof FormFields, boolean>>>({});
+
+  const videoPlayer = useVideoPlayer(require('@/assets/videos/hero-video.mp4'), player => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
 
   const toggleLocale = () => {
     const newLocale = locale === 'ru' ? 'kz' : 'ru';
@@ -109,6 +115,8 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
+    setErrors({});
+
     try {
       const { email, password, phone, first_name, last_name } = form;
 
@@ -126,20 +134,36 @@ export default function RegisterScreen() {
       if (refresh_token) await AsyncStorage.setItem('refresh_token', refresh_token);
       if (user) await AsyncStorage.setItem('user', JSON.stringify(user));
 
+      // Update AuthContext
+      await login({
+        id: user.id || '1',
+        name: user.first_name || user.name || 'User',
+        email: user.email || email,
+      });
+
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('🎉', `${t('signUp')} ${user?.first_name || 'пользователь'}!`);
 
       const redirectTo = user?.role === 'doctor' ? '/doctor' : '/(tabs)';
       router.replace(redirectTo as any);
     } catch (err: any) {
-      const message =
-        err?.response?.data?.error ||
-        err?.response?.data?.non_field_errors?.[0] ||
-        err?.message ||
-        t('somethingWentWrong');
+      let message = t('somethingWentWrong');
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(t('register'), message);
+      if (err?.response?.status === 409) {
+        message = 'Пользователь с таким email или телефоном уже существует';
+      } else if (err?.response?.data?.error) {
+        message = err.response.data.error;
+      } else if (err?.response?.data?.non_field_errors?.[0]) {
+        message = err.response.data.non_field_errors[0];
+      } else if (err?.message) {
+        message = err.message;
+      }
+
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setErrors({ general: message });
+      Object.keys(form).forEach(key => {
+        setShake(prev => ({ ...prev, [key]: true }));
+      });
+      setTimeout(() => setShake({}), 500);
     } finally {
       setLoading(false);
     }
@@ -147,8 +171,7 @@ export default function RegisterScreen() {
 
   const inputStyle = (field: string) => [
     styles.input,
-    focused === field && { borderColor: '#3A50FF' },
-    isDark && { backgroundColor: '#1a1a1a', color: '#fff', borderColor: '#333' },
+    focused === field && { borderColor: '#3A50FF', borderWidth: 2 }
   ];
 
   const renderInput = (
@@ -169,11 +192,17 @@ export default function RegisterScreen() {
         textContentType={secure ? 'password' : 'none'}
         autoComplete={field === 'email' ? 'email' : 'off'}
         keyboardType={keyboardType}
-        secureTextEntry={secure && secureText}
+        autoCapitalize={field === 'email' ? 'none' : 'words'}
+        secureTextEntry={secure && (field === 'password' ? secureText : secureConfirmText)}
       />
       {secure && field === 'password' && (
         <Pressable style={styles.eyeIcon} onPress={() => setSecureText(!secureText)}>
           <Ionicons name={secureText ? 'eye-off' : 'eye'} size={24} color="#666" />
+        </Pressable>
+      )}
+      {secure && field === 'confirmPassword' && (
+        <Pressable style={styles.eyeIcon} onPress={() => setSecureConfirmText(!secureConfirmText)}>
+          <Ionicons name={secureConfirmText ? 'eye-off' : 'eye'} size={24} color="#666" />
         </Pressable>
       )}
       {errors[field] && (
@@ -187,9 +216,24 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff' }}
+      style={{ flex: 1 }}
     >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      {/* Background Video */}
+      <VideoView
+        player={videoPlayer}
+        style={styles.videoBackground}
+        contentFit="cover"
+        nativeControls={false}
+      />
+
+      {/* Blur Overlay */}
+      <BlurView intensity={20} style={styles.overlay} tint="dark" />
+
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.languageToggle}>
           <Pressable onPress={toggleLocale}>
             <Text style={styles.languageToggleText}>
@@ -202,7 +246,7 @@ export default function RegisterScreen() {
           animation="fadeInDown"
           duration={800}
           delay={100}
-          source={require('@/assets/images/logosaas_new2.png')}
+          source={require('@/assets/images/logosaas.png')}
           style={styles.logo}
         />
 
@@ -218,7 +262,8 @@ export default function RegisterScreen() {
             <Checkbox.Android
               status={checked ? 'checked' : 'unchecked'}
               onPress={() => setChecked(!checked)}
-              color="#001E80"
+              color="#fff"
+              uncheckedColor="rgba(255, 255, 255, 0.7)"
             />
             <Text style={styles.checkboxLabel}>
               {t('agreementPrefix')} <Text style={styles.link}>{t('tos')}</Text> {t('and')}{' '}
@@ -229,6 +274,15 @@ export default function RegisterScreen() {
             <Animatable.Text animation="fadeIn" style={styles.error}>
               {errors.agreement}
             </Animatable.Text>
+          )}
+
+          {errors.general && (
+            <Animatable.View animation="shake" style={styles.generalErrorContainer}>
+              <Ionicons name="alert-circle" size={20} color="#ff3b30" />
+              <Animatable.Text animation="fadeIn" style={styles.generalError}>
+                {errors.general}
+              </Animatable.Text>
+            </Animatable.View>
           )}
         </Animatable.View>
 
@@ -263,7 +317,7 @@ export default function RegisterScreen() {
           </View>
         </Animatable.View>
 
-        <Animatable.View animation="fadeInUp" delay={600} style={styles.orContainer}>
+        {/* <Animatable.View animation="fadeInUp" delay={600} style={styles.orContainer}>
           <View style={styles.line} />
           <Text style={styles.or}>{t('or')}</Text>
           <View style={styles.line} />
@@ -284,7 +338,7 @@ export default function RegisterScreen() {
               </View>
             </LinearGradient>
           </Pressable>
-        </Animatable.View>
+        </Animatable.View> */}
 
         <Animatable.Text animation="fadeIn" delay={800} style={styles.contact}>
           {t('contact')}

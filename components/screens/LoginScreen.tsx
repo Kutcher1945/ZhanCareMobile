@@ -2,10 +2,9 @@ import api from '@/utils/api';
 import i18n from '@/utils/i18n';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -17,11 +16,12 @@ import {
   ScrollView,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import * as Animatable from 'react-native-animatable';
 import { Checkbox } from 'react-native-paper';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { styles } from './LoginScreen.styles';
 
 // 🔑 Optional: helper for login logic
@@ -43,19 +43,22 @@ export default function LoginScreen() {
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState('');
-  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({ email: '', password: '', general: '' });
   const [shakeEmail, setShakeEmail] = useState(false);
   const [shakePassword, setShakePassword] = useState(false);
   const [locale, setLocale] = useState(i18n.locale);
 
-  const colorScheme = useColorScheme();
-  const theme = useTheme();
+  const videoPlayer = useVideoPlayer(require('@/assets/videos/hero-video.mp4'), player => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
   const router = useRouter();
-  const navigation = useNavigation();
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    const newErrors = { email: '', password: '' };
+    const newErrors = { email: '', password: '', general: '' };
     let hasError = false;
 
     if (!email) {
@@ -82,6 +85,7 @@ export default function LoginScreen() {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
+    setErrors({ email: '', password: '', general: '' }); // Clear previous errors
 
     try {
       const user = await loginUser(email, password);
@@ -94,19 +98,33 @@ export default function LoginScreen() {
       });
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('🎉 Успех', `Добро пожаловать, ${user.first_name || ''}!`);
 
       const redirectTo = user.role === 'doctor' ? '/doctor' : '/(tabs)';
       router.replace(redirectTo as any); // ✅ TypeScript-safe
     } catch (err: any) {
-      const message =
-        err?.response?.data?.error ||
-        err?.response?.data?.non_field_errors?.[0] ||
-        err?.message ||
-        i18n.t('somethingWentWrong');
+      let message = i18n.t('somethingWentWrong');
+
+      // Check for authentication errors (401 or 400 with invalid credentials)
+      if (err?.response?.status === 401 || err?.response?.status === 400) {
+        message = i18n.t('invalidCredentials');
+      } else if (err?.response?.data?.error) {
+        message = err.response.data.error;
+      } else if (err?.response?.data?.non_field_errors?.[0]) {
+        message = err.response.data.non_field_errors[0];
+      } else if (err?.message) {
+        message = err.message;
+      }
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Ошибка входа', message);
+
+      // Show error inline instead of Alert
+      setErrors({ email: '', password: '', general: message });
+      setShakeEmail(true);
+      setShakePassword(true);
+      setTimeout(() => {
+        setShakeEmail(false);
+        setShakePassword(false);
+      }, 500);
     } finally {
       setLoading(false);
     }
@@ -120,15 +138,25 @@ export default function LoginScreen() {
 
   const dynamicInputStyle = (field: string) => [
     styles.input,
-    focused === field && { borderColor: '#3A50FF' },
-    colorScheme === 'dark' && { backgroundColor: '#1a1a1a', color: '#fff', borderColor: '#333' }
+    focused === field && { borderColor: '#3A50FF', borderWidth: 2 }
   ];
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }}
+      style={{ flex: 1 }}
     >
+      {/* Background Video */}
+      <VideoView
+        player={videoPlayer}
+        style={styles.videoBackground}
+        contentFit="cover"
+        nativeControls={false}
+      />
+
+      {/* Blur Overlay */}
+      <BlurView intensity={20} style={styles.overlay} tint="dark" />
+
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
@@ -146,7 +174,7 @@ export default function LoginScreen() {
           animation="fadeInDown"
           duration={800}
           delay={100}
-          source={require('@/assets/images/logosaas_new2.png')}
+          source={require('@/assets/images/logosaas.png')}
           style={styles.logo}
         />
 
@@ -191,7 +219,8 @@ export default function LoginScreen() {
             <Checkbox.Android
               status={checked ? 'checked' : 'unchecked'}
               onPress={() => setChecked(!checked)}
-              color="#001E80"
+              color="#fff"
+              uncheckedColor="rgba(255, 255, 255, 0.7)"
             />
             <Text style={styles.checkboxLabel}>
               {i18n.t('agreementPrefix')}{' '}
@@ -200,6 +229,15 @@ export default function LoginScreen() {
               <Text style={styles.link}>{i18n.t('privacy')}</Text>.
             </Text>
           </View>
+
+          {errors.general ? (
+            <Animatable.View animation="shake" style={styles.generalErrorContainer}>
+              <Ionicons name="alert-circle" size={20} color="#ff3b30" />
+              <Animatable.Text animation="fadeIn" style={styles.generalError}>
+                {errors.general}
+              </Animatable.Text>
+            </Animatable.View>
+          ) : null}
         </Animatable.View>
 
         <View style={styles.divider} />
@@ -221,7 +259,7 @@ export default function LoginScreen() {
           </Pressable>
 
           <View style={styles.linkRow}>
-            <Pressable onPress={() => console.log('Forgot Password')}>
+            <Pressable onPress={() => router.push('/forgot-password')}>
               <Text style={styles.link}>{i18n.t('forgotPassword')}</Text>
             </Pressable>
             <Pressable onPress={() => router.push('/register')}>
@@ -230,7 +268,7 @@ export default function LoginScreen() {
           </View>
         </Animatable.View>
 
-        <Animatable.View animation="fadeInUp" delay={600} style={styles.orContainer}>
+        {/* <Animatable.View animation="fadeInUp" delay={600} style={styles.orContainer}>
           <View style={styles.line} />
           <Text style={styles.or}>{i18n.t('or')}</Text>
           <View style={styles.line} />
@@ -246,7 +284,7 @@ export default function LoginScreen() {
               </View>
             </LinearGradient>
           </Pressable>
-        </Animatable.View>
+        </Animatable.View> */}
 
         <Animatable.Text animation="fadeIn" delay={800} style={styles.contact}>
           {i18n.t('contact')}

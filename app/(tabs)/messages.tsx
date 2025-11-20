@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   Pressable,
@@ -22,6 +23,8 @@ interface Message {
 }
 
 export default function MessagesScreen() {
+  const router = useRouter();
+
   const messages: Message[] = [
     {
       id: '1',
@@ -72,7 +75,30 @@ export default function MessagesScreen() {
         </View>
       </View>
 
+      {/* AI Chat Card */}
+      <Pressable
+        style={styles.aiChatCard}
+        onPress={() => router.push('/ai-chat')}
+      >
+        <LinearGradient
+          colors={['#3772ff', '#2c5bcc']}
+          style={styles.aiChatGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.aiChatIcon}>
+            <Ionicons name="chatbubbles" size={24} color="#FFFFFF" />
+          </View>
+          <View style={styles.aiChatContent}>
+            <Text style={styles.aiChatTitle}>💬 Чат с AI-врачом</Text>
+            <Text style={styles.aiChatSubtitle}>Получите медицинскую консультацию от искусственного интеллекта</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="rgba(255, 255, 255, 0.8)" />
+        </LinearGradient>
+      </Pressable>
+
       {/* Messages List */}
+      <Text style={styles.sectionTitle}>Врачи</Text>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {messages.map((message) => (
           <Pressable key={message.id} style={styles.messageCard}>
@@ -179,6 +205,52 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 15,
     color: '#9CA3AF',
+  },
+  aiChatCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#3772ff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  aiChatGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  aiChatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  aiChatContent: {
+    flex: 1,
+  },
+  aiChatTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  aiChatSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 18,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginHorizontal: 20,
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,

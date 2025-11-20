@@ -12,7 +12,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const currentRoute = segments.join('/');
 
     // Whitelist of routes that authenticated users can access outside of tabs
-    const allowedRoutes = ['book-consultation', 'video-call', 'medical-history'];
+    const allowedRoutes = ['book-consultation', 'video-call', 'medical-history', 'ai-chat'];
     const isAllowedRoute = allowedRoutes.some(route => currentRoute.includes(route));
 
     if (!isAuthenticated && inAuthGroup) {

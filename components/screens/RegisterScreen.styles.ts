@@ -1,12 +1,28 @@
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
+  videoBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
   container: {
-    flexGrow: 1,
     paddingHorizontal: 24,
     paddingVertical: 48,
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    flexGrow: 1,
   },
   logo: {
     height: 80,
@@ -19,8 +35,8 @@ export const styles = StyleSheet.create({
     marginBottom: 24,
   },
   input: {
-    borderColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#fff',
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
@@ -28,6 +44,7 @@ export const styles = StyleSheet.create({
     marginBottom: 14,
     fontSize: 15,
     color: '#000',
+    fontWeight: '500',
   },
   eyeIcon: {
     position: 'absolute',
@@ -47,12 +64,12 @@ export const styles = StyleSheet.create({
   },
   checkboxLabel: {
     flex: 1,
-    color: '#444',
+    color: '#fff',
     fontSize: 13,
     lineHeight: 18,
   },
   link: {
-    color: '#001E80',
+    color: '#5A9FFF',
     fontWeight: '600',
   },
   buttonWrapper: {
@@ -73,7 +90,7 @@ export const styles = StyleSheet.create({
   },
   linkRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginTop: 12,
   },
   orContainer: {
@@ -99,7 +116,7 @@ export const styles = StyleSheet.create({
   },
   contact: {
     textAlign: 'center',
-    color: '#999',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginTop: 12,
     fontSize: 13,
   },
@@ -109,16 +126,35 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#001E80',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 8,
   },
   languageToggleText: {
-    color: '#001E80',
+    color: '#000',
     fontWeight: '600',
     fontSize: 13,
   },
   footerText: {
-    color: '#555',
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 14,
+  },
+  generalErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff1f0',
+    borderLeftWidth: 3,
+    borderLeftColor: '#ff3b30',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    gap: 10,
+  },
+  generalError: {
+    flex: 1,
+    color: '#d32f2f',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
   },
 });
