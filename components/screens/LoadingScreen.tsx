@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Image, StyleSheet } from 'react-native';
@@ -8,6 +9,9 @@ export default function LoadingScreen() {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    // Trigger haptic feedback on mount
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
     // Initial fade-in and scale animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -23,8 +27,8 @@ export default function LoadingScreen() {
       }),
     ]).start();
 
-    // Continuous pulse animation
-    Animated.loop(
+    // Continuous pulse animation with haptic feedback
+    const pulseAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.05,
@@ -37,7 +41,19 @@ export default function LoadingScreen() {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+
+    // Haptic feedback synchronized with pulse
+    const hapticInterval = setInterval(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 2000); // Match the pulse cycle (1000ms up + 1000ms down)
+
+    pulseAnimation.start();
+
+    return () => {
+      clearInterval(hapticInterval);
+      pulseAnimation.stop();
+    };
   }, []);
 
   return (

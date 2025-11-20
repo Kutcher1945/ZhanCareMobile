@@ -2,7 +2,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
@@ -18,6 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './HomePage.styles';
 import { QuickActionSkeleton, AppointmentCardSkeleton } from '@/components/common/SkeletonLoader';
 import { EmptyState } from '@/components/common/EmptyState';
+import { consultationService } from '@/services/consultationService';
+import { Consultation } from '@/types/consultation';
 
 const { width } = Dimensions.get('window');
 
@@ -29,22 +31,15 @@ interface QuickActionCard {
   onPress: () => void;
 }
 
-interface UpcomingAppointment {
-  id: string;
-  doctorName: string;
-  specialty: string;
-  date: string;
-  time: string;
-  type: 'video' | 'home' | 'clinic';
-}
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function HomePage() {
   const { user, logout } = useAuth();
+  const routerHook = useRouter();
   const [greeting, setGreeting] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [upcomingConsultations, setUpcomingConsultations] = useState<Consultation[]>([]);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const slideAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -70,9 +65,17 @@ export default function HomePage() {
   }, []);
 
   const loadInitialData = async () => {
-    // Simulate initial data loading
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
+    try {
+      const consultations = await consultationService.getMyConsultations({
+        status: ['pending', 'scheduled', 'planned'],
+      });
+      // Get only the next 3 upcoming consultations
+      setUpcomingConsultations(consultations.slice(0, 3));
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const updateGreeting = () => {
@@ -86,14 +89,14 @@ export default function HomePage() {
     setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await loadInitialData();
     updateGreeting();
 
     setRefreshing(false);
   };
 
   const handleActionPress = (action: QuickActionCard) => {
+    console.log('Quick action pressed:', action.id);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     action.onPress();
   };
@@ -104,7 +107,9 @@ export default function HomePage() {
       icon: 'videocam',
       title: 'Видео звонок',
       colors: ['#3772ff', '#2c5bcc'],
-      onPress: () => console.log('Video consultation'),
+      onPress: () => {
+        routerHook.push('/book-consultation');
+      },
     },
     {
       id: 'home',
@@ -143,16 +148,21 @@ export default function HomePage() {
     },
   ];
 
-  const upcomingAppointments: UpcomingAppointment[] = [
-    {
-      id: '1',
-      doctorName: 'Доктор Иванов',
-      specialty: 'Терапевт',
-      date: '15 ноября',
-      time: '14:30',
-      type: 'video',
-    },
-  ];
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const healthStats = [
     { label: 'Пульс', value: '72', unit: 'уд/мин', icon: 'heart', color: '#EF4444' },
@@ -276,43 +286,50 @@ export default function HomePage() {
             Array.from({ length: 2 }).map((_, index) => (
               <AppointmentCardSkeleton key={`appointment-skeleton-${index}`} />
             ))
-          ) : upcomingAppointments.length > 0 ? (
+          ) : upcomingConsultations.length > 0 ? (
             // Show actual appointments
-            upcomingAppointments.map((appointment) => (
-              <Pressable key={appointment.id} style={styles.appointmentCard}>
-                <View style={styles.appointmentIcon}>
-                  <LinearGradient
-                    colors={['#3772ff', '#2c5bcc']}
-                    style={styles.appointmentIconGradient}
-                  >
-                    <Ionicons
-                      name={
-                        appointment.type === 'video'
-                          ? 'videocam'
-                          : appointment.type === 'home'
-                          ? 'home'
-                          : 'medical'
-                      }
-                      size={24}
-                      color="#FFFFFF"
-                    />
-                  </LinearGradient>
-                </View>
+            upcomingConsultations.map((consultation) => {
+              const doctorName = `${consultation.doctor_first_name || ''} ${consultation.doctor_last_name || ''}`.trim() || 'Доктор';
+              const dateToShow = consultation.scheduled_at || consultation.created_at;
 
-                <View style={styles.appointmentInfo}>
-                  <Text style={styles.doctorName}>{appointment.doctorName}</Text>
-                  <Text style={styles.specialty}>{appointment.specialty}</Text>
-                  <View style={styles.appointmentTime}>
-                    <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-                    <Text style={styles.timeText}>
-                      {appointment.date} в {appointment.time}
-                    </Text>
+              return (
+                <Pressable key={consultation.id} style={styles.appointmentCard}>
+                  <View style={styles.appointmentIcon}>
+                    <LinearGradient
+                      colors={['#3772ff', '#2c5bcc']}
+                      style={styles.appointmentIconGradient}
+                    >
+                      <Ionicons
+                        name={
+                          consultation.type === 'video'
+                            ? 'videocam'
+                            : consultation.type === 'phone'
+                            ? 'call'
+                            : consultation.type === 'chat'
+                            ? 'chatbubbles'
+                            : 'medical'
+                        }
+                        size={24}
+                        color="#FFFFFF"
+                      />
+                    </LinearGradient>
                   </View>
-                </View>
 
-                <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-              </Pressable>
-            ))
+                  <View style={styles.appointmentInfo}>
+                    <Text style={styles.doctorName}>{doctorName}</Text>
+                    <Text style={styles.specialty}>{consultation.doctor_specialization || 'Специалист'}</Text>
+                    <View style={styles.appointmentTime}>
+                      <Ionicons name="calendar-outline" size={14} color="#6B7280" />
+                      <Text style={styles.timeText}>
+                        {formatDate(dateToShow)} в {formatTime(dateToShow)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+                </Pressable>
+              );
+            })
           ) : (
             // Show empty state when no appointments
             <EmptyState
@@ -322,7 +339,7 @@ export default function HomePage() {
               actionText="Записаться на прием"
               onAction={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                console.log('Book appointment');
+                router.push('/book-consultation');
               }}
             />
           )}

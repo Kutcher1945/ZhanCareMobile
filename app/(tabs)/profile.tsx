@@ -7,11 +7,11 @@ import {
   Pressable,
   ScrollView,
   StatusBar,
+  StyleSheet,
   View,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet } from 'react-native';
 
 interface MenuItem {
   id: string;
@@ -94,7 +94,7 @@ export default function ProfileScreen() {
           id: 'about',
           icon: 'information-circle-outline',
           title: 'О приложении',
-          subtitle: 'Версия 1.0.0',
+          subtitle: 'Версия 0.0.1',
           onPress: () => console.log('About'),
           showChevron: true,
         },

@@ -7,7 +7,8 @@
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
       "Bash(cat:*)",
-      "Bash(npx expo-doctor:*)"
+      "Bash(npx expo-doctor:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

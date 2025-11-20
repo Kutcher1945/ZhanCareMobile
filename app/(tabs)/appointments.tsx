@@ -1,88 +1,151 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Pressable,
   ScrollView,
   StatusBar,
   View,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
+import { consultationService } from '@/services/consultationService';
+import { Consultation, ConsultationStatus } from '@/types/consultation';
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 
-interface Appointment {
-  id: string;
-  doctorName: string;
-  specialty: string;
-  date: string;
-  time: string;
-  status: 'upcoming' | 'completed' | 'cancelled';
-  type: 'video' | 'home' | 'clinic';
-}
+type FilterType = 'all' | 'upcoming' | 'completed';
 
 export default function AppointmentsScreen() {
-  const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'completed'>('upcoming');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('upcoming');
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const appointments: Appointment[] = [
-    {
-      id: '1',
-      doctorName: 'Доктор Иванов И.И.',
-      specialty: 'Терапевт',
-      date: '15 ноября 2024',
-      time: '14:30',
-      status: 'upcoming',
-      type: 'video',
-    },
-    {
-      id: '2',
-      doctorName: 'Доктор Смирнова А.В.',
-      specialty: 'Кардиолог',
-      date: '18 ноября 2024',
-      time: '10:00',
-      status: 'upcoming',
-      type: 'clinic',
-    },
-    {
-      id: '3',
-      doctorName: 'Доктор Петров С.М.',
-      specialty: 'Педиатр',
-      date: '10 ноября 2024',
-      time: '16:00',
-      status: 'completed',
-      type: 'home',
-    },
-  ];
+  const fetchConsultations = useCallback(async () => {
+    try {
+      setLoading(true);
 
-  const filteredAppointments = appointments.filter(apt => {
-    if (activeFilter === 'all') return true;
-    return apt.status === activeFilter;
-  });
+      let statusFilters: ConsultationStatus[] = [];
+      if (activeFilter === 'upcoming') {
+        statusFilters = ['pending', 'scheduled', 'planned'];
+      } else if (activeFilter === 'completed') {
+        statusFilters = ['completed'];
+      }
 
-  const getStatusColor = (status: string) => {
+      const data = await consultationService.getMyConsultations({
+        status: statusFilters.length > 0 ? statusFilters : undefined,
+      });
+
+      setConsultations(data);
+    } catch (error) {
+      console.error('Error fetching consultations:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeFilter]);
+
+  useEffect(() => {
+    fetchConsultations();
+  }, [fetchConsultations]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await fetchConsultations();
+    setRefreshing(false);
+  };
+
+  const filteredAppointments = consultations;
+
+  const getStatusColor = (status: ConsultationStatus) => {
     switch (status) {
-      case 'upcoming': return '#3772ff';
-      case 'completed': return '#10B981';
-      case 'cancelled': return '#EF4444';
-      default: return '#9CA3AF';
+      case 'pending':
+      case 'scheduled':
+      case 'planned':
+        return '#3772ff';
+      case 'ongoing':
+        return '#F59E0B';
+      case 'completed':
+        return '#10B981';
+      case 'cancelled':
+      case 'missed':
+        return '#EF4444';
+      default:
+        return '#9CA3AF';
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: ConsultationStatus) => {
     switch (status) {
-      case 'upcoming': return 'Предстоящий';
-      case 'completed': return 'Завершен';
-      case 'cancelled': return 'Отменен';
-      default: return status;
+      case 'pending':
+        return 'Ожидает';
+      case 'scheduled':
+      case 'planned':
+        return 'Запланировано';
+      case 'ongoing':
+        return 'Идет';
+      case 'completed':
+        return 'Завершен';
+      case 'cancelled':
+        return 'Отменен';
+      case 'missed':
+        return 'Пропущено';
+      default:
+        return status;
     }
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type?: string) => {
     switch (type) {
-      case 'video': return 'videocam';
-      case 'home': return 'home';
-      case 'clinic': return 'medical';
-      default: return 'calendar';
+      case 'video':
+        return 'videocam';
+      case 'phone':
+        return 'call';
+      case 'chat':
+        return 'chatbubbles';
+      default:
+        return 'calendar';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const handleCancelConsultation = async (id: number) => {
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      await consultationService.cancelConsultation(id);
+      await fetchConsultations();
+    } catch (error) {
+      console.error('Error cancelling consultation:', error);
+    }
+  };
+
+  const handleJoinConsultation = async (consultation: Consultation) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      // TODO: Navigate to video call screen with meeting_id
+      console.log('Join consultation:', consultation.meeting_id);
+    } catch (error) {
+      console.error('Error joining consultation:', error);
     }
   };
 
@@ -93,7 +156,13 @@ export default function AppointmentsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Мои записи</Text>
-        <Pressable style={styles.addButton}>
+        <Pressable
+          style={styles.addButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push('/book-consultation');
+          }}
+        >
           <LinearGradient
             colors={['#3772ff', '#2c5bcc']}
             style={styles.addButtonGradient}
@@ -136,8 +205,23 @@ export default function AppointmentsScreen() {
       </View>
 
       {/* Appointments List */}
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {filteredAppointments.length === 0 ? (
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#3772ff"
+            colors={['#3772ff']}
+          />
+        }
+      >
+        {loading && !refreshing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3772ff" />
+          </View>
+        ) : filteredAppointments.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={64} color="#D1D5DB" />
             <Text style={styles.emptyStateTitle}>Нет записей</Text>
@@ -146,62 +230,82 @@ export default function AppointmentsScreen() {
             </Text>
           </View>
         ) : (
-          filteredAppointments.map((appointment) => (
-            <Pressable key={appointment.id} style={styles.appointmentCard}>
-              <View style={styles.appointmentHeader}>
-                <View style={styles.appointmentIcon}>
-                  <LinearGradient
-                    colors={['#3772ff', '#2c5bcc']}
-                    style={styles.appointmentIconGradient}
-                  >
-                    <Ionicons
-                      name={getTypeIcon(appointment.type) as any}
-                      size={24}
-                      color="#FFFFFF"
-                    />
-                  </LinearGradient>
-                </View>
-                <View style={styles.appointmentInfo}>
-                  <Text style={styles.doctorName}>{appointment.doctorName}</Text>
-                  <Text style={styles.specialty}>{appointment.specialty}</Text>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(appointment.status)}15` }]}>
-                  <Text style={[styles.statusText, { color: getStatusColor(appointment.status) }]}>
-                    {getStatusText(appointment.status)}
-                  </Text>
-                </View>
-              </View>
+          filteredAppointments.map((consultation) => {
+            const doctorName = `${consultation.doctor_first_name || ''} ${consultation.doctor_last_name || ''}`.trim() || 'Доктор';
+            const dateToShow = consultation.scheduled_at || consultation.created_at;
 
-              <View style={styles.appointmentDetails}>
-                <View style={styles.detailRow}>
-                  <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-                  <Text style={styles.detailText}>{appointment.date}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Ionicons name="time-outline" size={16} color="#6B7280" />
-                  <Text style={styles.detailText}>{appointment.time}</Text>
-                </View>
-              </View>
-
-              {appointment.status === 'upcoming' && (
-                <View style={styles.appointmentActions}>
-                  <Pressable style={styles.actionButton}>
-                    <Text style={styles.actionButtonText}>Отменить</Text>
-                  </Pressable>
-                  <Pressable style={styles.actionButtonPrimary}>
+            return (
+              <Pressable key={consultation.id} style={styles.appointmentCard}>
+                <View style={styles.appointmentHeader}>
+                  <View style={styles.appointmentIcon}>
                     <LinearGradient
                       colors={['#3772ff', '#2c5bcc']}
-                      style={styles.actionButtonPrimaryGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
+                      style={styles.appointmentIconGradient}
                     >
-                      <Text style={styles.actionButtonPrimaryText}>Присоединиться</Text>
+                      <Ionicons
+                        name={getTypeIcon(consultation.type) as any}
+                        size={24}
+                        color="#FFFFFF"
+                      />
                     </LinearGradient>
-                  </Pressable>
+                  </View>
+                  <View style={styles.appointmentInfo}>
+                    <Text style={styles.doctorName}>{doctorName}</Text>
+                    <Text style={styles.specialty}>{consultation.doctor_specialization || 'Специалист'}</Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(consultation.status)}15` }]}>
+                    <Text style={[styles.statusText, { color: getStatusColor(consultation.status) }]}>
+                      {getStatusText(consultation.status)}
+                    </Text>
+                  </View>
                 </View>
-              )}
-            </Pressable>
-          ))
+
+                <View style={styles.appointmentDetails}>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+                    <Text style={styles.detailText}>{formatDate(dateToShow)}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="time-outline" size={16} color="#6B7280" />
+                    <Text style={styles.detailText}>{formatTime(dateToShow)}</Text>
+                  </View>
+                </View>
+
+                {consultation.symptoms && (
+                  <View style={styles.symptomsContainer}>
+                    <Text style={styles.symptomsLabel}>Симптомы:</Text>
+                    <Text style={styles.symptomsText} numberOfLines={2}>{consultation.symptoms}</Text>
+                  </View>
+                )}
+
+                {(consultation.status === 'pending' || consultation.status === 'scheduled' || consultation.status === 'planned') && (
+                  <View style={styles.appointmentActions}>
+                    <Pressable
+                      style={styles.actionButton}
+                      onPress={() => handleCancelConsultation(consultation.id)}
+                    >
+                      <Text style={styles.actionButtonText}>Отменить</Text>
+                    </Pressable>
+                    {consultation.status === 'scheduled' && (
+                      <Pressable
+                        style={styles.actionButtonPrimary}
+                        onPress={() => handleJoinConsultation(consultation)}
+                      >
+                        <LinearGradient
+                          colors={['#3772ff', '#2c5bcc']}
+                          style={styles.actionButtonPrimaryGradient}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                        >
+                          <Text style={styles.actionButtonPrimaryText}>Присоединиться</Text>
+                        </LinearGradient>
+                      </Pressable>
+                    )}
+                  </View>
+                )}
+              </Pressable>
+            );
+          })
         )}
       </ScrollView>
     </SafeAreaView>
@@ -387,5 +491,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  symptomsContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+  },
+  symptomsLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  symptomsText: {
+    fontSize: 14,
+    color: '#111827',
+    lineHeight: 20,
   },
 });
