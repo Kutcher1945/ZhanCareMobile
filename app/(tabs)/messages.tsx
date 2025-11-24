@@ -110,8 +110,8 @@ export default function MessagesScreen() {
                 end={{ x: 1, y: 1 }}
               >
                 <Text style={styles.avatarText}>{message.doctorName.charAt(0)}</Text>
-                {message.online && <View style={styles.onlineDot} />}
               </LinearGradient>
+              {message.online && <View style={styles.onlineDot} />}
             </View>
 
             <View style={styles.messageContent}>

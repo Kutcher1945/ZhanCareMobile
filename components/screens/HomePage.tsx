@@ -251,7 +251,7 @@ export default function HomePage() {
                       end={{ x: 1, y: 1 }}
                     >
                       <View style={styles.quickActionIcon}>
-                        <Ionicons name={action.icon} size={26} color="#FFFFFF" />
+                        <Ionicons name={action.icon} size={22} color="#FFFFFF" />
                       </View>
                       <View style={styles.quickActionTextContainer}>
                         <Text style={styles.quickActionTitle}>{action.title}</Text>

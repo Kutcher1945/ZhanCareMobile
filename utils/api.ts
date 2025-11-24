@@ -33,17 +33,18 @@ api.interceptors.response.use(
 
     // Don't try to refresh token for auth endpoints (login, register, refresh)
     const authEndpoints = ['/auth/login/', '/auth/register/', '/auth/refresh/'];
-    const isAuthEndpoint = authEndpoints.some(endpoint => originalRequest.url?.includes(endpoint));
+    const isAuthEndpoint = authEndpoints.some(endpoint => originalRequest?.url?.includes(endpoint));
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (error.response?.status === 401 && !originalRequest?._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
         const refresh_token = await AsyncStorage.getItem('refresh_token');
         if (!refresh_token) {
-          // No refresh token available, redirect to login
-          logoutUser('⏳ Ваша сессия истекла. Пожалуйста, войдите снова.');
-          return Promise.reject(error);
+          // No refresh token available, redirect to login silently
+          await logoutUser();
+          // Return a silent rejection to prevent error logging
+          return new Promise(() => {});
         }
 
         const { data } = await axios.post(`${baseURL}/auth/refresh/`, {
@@ -56,9 +57,10 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Token ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        console.warn('🔐 Refresh failed. Logging out...');
-        logoutUser('⏳ Ваша сессия истекла. Пожалуйста, войдите снова.');
-        return Promise.reject(refreshError);
+        // Refresh failed, logout silently
+        await logoutUser();
+        // Return a silent rejection to prevent error logging
+        return new Promise(() => {});
       }
     }
 

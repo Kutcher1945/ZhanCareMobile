@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import LoadingScreen from '@/components/screens/LoadingScreen';
+import { DeviceEventEmitter } from 'react-native';
 
 interface User {
   id: string;
@@ -8,6 +9,9 @@ interface User {
   email: string;
   role?: string;
 }
+
+// Event name for force logout
+export const FORCE_LOGOUT_EVENT = 'FORCE_LOGOUT';
 
 const AuthContext = createContext<{
   isAuthenticated: boolean;
@@ -28,6 +32,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     checkAuthState();
+
+    // Listen for force logout events from outside React context
+    const subscription = DeviceEventEmitter.addListener(FORCE_LOGOUT_EVENT, () => {
+      setIsAuthenticated(false);
+      setUser(null);
+    });
+
+    return () => subscription.remove();
   }, []);
 
   const checkAuthState = async () => {
