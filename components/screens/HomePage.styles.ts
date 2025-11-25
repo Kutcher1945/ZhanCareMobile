@@ -13,14 +13,14 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 20,
   },
 
   // Header Section
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 20,
+    paddingBottom: 12,
   },
   headerTop: {
     flexDirection: 'row',
@@ -93,9 +93,53 @@ export const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 
+  // Promo Banners Carousel
+  carouselSection: {
+    marginTop: 8,
+    marginBottom: 0,
+  },
+  carouselContent: {
+    paddingHorizontal: 16,
+  },
+  bannerItem: {
+    width: width - 64,
+    height: 130,
+    marginHorizontal: 8,
+  },
+  bannerImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 6,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D1D5DB',
+  },
+  paginationDotActive: {
+    width: 24,
+    backgroundColor: '#3772ff',
+  },
+
+  // Separator
+  separator: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+
   // Sections
   section: {
-    marginTop: 28,
+    marginTop: 8,
     paddingHorizontal: 20,
   },
   sectionHeader: {

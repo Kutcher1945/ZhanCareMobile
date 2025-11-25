@@ -1,12 +1,18 @@
+import { EmptyState } from '@/components/common/EmptyState';
+import { AppointmentCardSkeleton, QuickActionSkeleton } from '@/components/common/SkeletonLoader';
 import { useAuth } from '@/context/AuthContext';
+import { consultationService } from '@/services/consultationService';
+import { Consultation } from '@/types/consultation';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
+  FlatList,
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -16,10 +22,6 @@ import {
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './HomePage.styles';
-import { QuickActionSkeleton, AppointmentCardSkeleton } from '@/components/common/SkeletonLoader';
-import { EmptyState } from '@/components/common/EmptyState';
-import { consultationService } from '@/services/consultationService';
-import { Consultation } from '@/types/consultation';
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +35,16 @@ interface QuickActionCard {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// Promo banners data
+const PROMO_BANNERS = [
+  { id: '1', image: require('@/assets/images/promo_banner.png') },
+  { id: '2', image: require('@/assets/images/promo_banner_2.png') },
+  { id: '3', image: require('@/assets/images/promo_banner_3.png') },
+];
+
+const BANNER_WIDTH = width - 48; // Account for padding and margins
+const BANNER_HEIGHT = 130;
+
 export default function HomePage() {
   const { user, logout } = useAuth();
   const routerHook = useRouter();
@@ -42,6 +54,7 @@ export default function HomePage() {
   const [upcomingConsultations, setUpcomingConsultations] = useState<Consultation[]>([]);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const slideAnim = React.useRef(new Animated.Value(0)).current;
+  const bannerFlatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     console.log('HomePage mounted', user);
@@ -170,6 +183,17 @@ export default function HomePage() {
     { label: 'Сон', value: '7.5', unit: 'часов', icon: 'moon', color: '#8B5CF6' },
   ];
 
+  // Render banner item
+  const renderBannerItem = ({ item }: { item: typeof PROMO_BANNERS[0] }) => (
+    <View style={styles.bannerItem}>
+      <Image
+        source={item.image}
+        style={styles.bannerImage}
+        resizeMode="cover"
+      />
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
@@ -197,7 +221,7 @@ export default function HomePage() {
             },
           ]}
         >
-          <View style={styles.headerTop}>
+          {/* <View style={styles.headerTop}>
             <View>
               <Text style={styles.greeting}>{greeting}!</Text>
               <Text style={styles.userName}>{user?.name || 'Пользователь'}</Text>
@@ -214,13 +238,37 @@ export default function HomePage() {
               </LinearGradient>
               <View style={styles.onlineDot} />
             </Pressable>
-          </View>
+          </View> */}
 
           {/* Search Bar */}
           <Pressable style={styles.searchBar}>
             <Ionicons name="search" size={20} color="#9CA3AF" />
             <Text style={styles.searchPlaceholder}>Поиск врачей, услуг...</Text>
           </Pressable>
+        </Animated.View>
+
+        {/* Promo Banners Carousel */}
+        <Animated.View
+          style={[
+            styles.carouselSection,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <FlatList
+            ref={bannerFlatListRef}
+            data={PROMO_BANNERS}
+            renderItem={renderBannerItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={width - 48}
+            decelerationRate="fast"
+            contentContainerStyle={styles.carouselContent}
+          />
         </Animated.View>
 
         {/* Quick Actions Section */}
@@ -263,6 +311,9 @@ export default function HomePage() {
             </View>
           </View>
         </View>
+
+        {/* Separator Line */}
+        <View style={styles.separator} />
 
         {/* Upcoming Appointments */}
         <Animated.View
