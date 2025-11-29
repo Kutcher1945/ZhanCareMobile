@@ -16,30 +16,45 @@ export const styles = StyleSheet.create({
     paddingBottom: 20,
   },
 
-  // Header Section
-  header: {
+  // Premium Hero Header
+  heroHeader: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 12,
+    paddingTop: 20,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: '#3772ff',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  headerContent: {
+    gap: 20,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+  },
+  greetingContainer: {
+    flex: 1,
   },
   greeting: {
-    fontSize: 16,
-    color: '#6B7280',
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
   },
   userName: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFFFFF',
     marginTop: 4,
   },
   avatarContainer: {
+    position: 'relative',
+  },
+  avatarWrapper: {
     position: 'relative',
   },
   avatar: {
@@ -48,16 +63,13 @@ export const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#3772ff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarText: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#3772ff',
   },
   onlineDot: {
     position: 'absolute',
@@ -68,7 +80,7 @@ export const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: '#10B981',
     borderWidth: 3,
-    borderColor: '#F9FAFB',
+    borderColor: '#FFFFFF',
   },
 
   // Search Bar
@@ -79,18 +91,20 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchPlaceholder: {
+    flex: 1,
     marginLeft: 12,
     fontSize: 15,
     color: '#9CA3AF',
+  },
+  searchIconRight: {
+    marginLeft: 12,
   },
 
   // Promo Banners Carousel
@@ -105,11 +119,63 @@ export const styles = StyleSheet.create({
     width: width - 64,
     height: 130,
     marginHorizontal: 8,
+    position: 'relative',
+  },
+  // 3D Shadow layers for depth effect
+  bannerShadowLayer1: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: '#3772ff',
+    opacity: 0.1,
+    top: 8,
+    left: 4,
+    transform: [{ scale: 0.98 }],
+  },
+  bannerShadowLayer2: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: '#2c5bcc',
+    opacity: 0.15,
+    top: 4,
+    left: 2,
+    transform: [{ scale: 0.99 }],
+  },
+  bannerWrapper: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#3772ff',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
   },
   bannerImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 16,
+  },
+  // Gradient overlay for depth
+  bannerGradientOverlay: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    bottom: 0,
+    left: 0,
+  },
+  // Light reflection for 3D gloss effect
+  bannerLightReflection: {
+    position: 'absolute',
+    width: '60%',
+    height: '60%',
+    top: -10,
+    left: -10,
+    borderRadius: 100,
+    opacity: 0.6,
   },
   paginationContainer: {
     flexDirection: 'row',
@@ -342,5 +408,120 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
+  },
+
+  // Stats Section
+  statsSection: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  statGradient: {
+    padding: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  // statLabel: {
+  //   fontSize: 12,
+  //   fontWeight: '600',
+  //   color: 'rgba(255, 255, 255, 0.9)',
+  //   textAlign: 'center',
+  // },
+
+  // Find Clinics Card
+  findClinicsCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#3772ff',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  findClinicsGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 16,
+  },
+  findClinicsIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  findClinicsContent: {
+    flex: 1,
+  },
+  findClinicsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  findClinicsText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 20,
+  },
+
+  // Health Tip Card (kept for reference)
+  healthTipCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#3772ff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  healthTipGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    gap: 16,
+  },
+  healthTipIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(55, 114, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  healthTipContent: {
+    flex: 1,
+  },
+  healthTipTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 6,
+  },
+  healthTipText: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
   },
 });

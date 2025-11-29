@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { Platform, View, ActivityIndicator, StyleSheet } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -29,6 +29,15 @@ export default function TabLayout() {
         tabBarIconStyle: {
           marginTop: 4,
         },
+        // Add smooth transitions
+        animation: 'shift',
+        lazy: false, // Disable lazy loading to prevent white screens
+        // Add loading placeholder
+        lazyPlaceholder: () => (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3772ff" />
+          </View>
+        ),
       }}>
       <Tabs.Screen
         name="index"
@@ -44,12 +53,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="appointments"
+        name="clinics"
         options={{
-          title: 'Записи',
+          title: 'Клиники',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={focused ? 'calendar' : 'calendar-outline'}
+              name={focused ? 'medical' : 'medical-outline'}
               size={24}
               color={color}
             />
@@ -89,6 +98,21 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="appointments"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+});

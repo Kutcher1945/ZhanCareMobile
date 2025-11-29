@@ -25,35 +25,7 @@ interface Message {
 export default function MessagesScreen() {
   const router = useRouter();
 
-  const messages: Message[] = [
-    {
-      id: '1',
-      doctorName: 'Доктор Иванов И.И.',
-      specialty: 'Терапевт',
-      lastMessage: 'Добрый день! Результаты анализов готовы',
-      timestamp: '10:30',
-      unread: 2,
-      online: true,
-    },
-    {
-      id: '2',
-      doctorName: 'Доктор Смирнова А.В.',
-      specialty: 'Кардиолог',
-      lastMessage: 'Не забудьте принять лекарства',
-      timestamp: 'Вчера',
-      unread: 1,
-      online: false,
-    },
-    {
-      id: '3',
-      doctorName: 'Доктор Петров С.М.',
-      specialty: 'Педиатр',
-      lastMessage: 'Спасибо за консультацию!',
-      timestamp: '2 дня назад',
-      unread: 0,
-      online: false,
-    },
-  ];
+  const messages: Message[] = [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -100,48 +72,61 @@ export default function MessagesScreen() {
       {/* Messages List */}
       <Text style={styles.sectionTitle}>Врачи</Text>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {messages.map((message) => (
-          <Pressable key={message.id} style={styles.messageCard}>
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={['#3772ff', '#2c5bcc']}
-                style={styles.avatar}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.avatarText}>{message.doctorName.charAt(0)}</Text>
-              </LinearGradient>
-              {message.online && <View style={styles.onlineDot} />}
+        {messages.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="chatbubbles-outline" size={64} color="#D1D5DB" />
             </View>
-
-            <View style={styles.messageContent}>
-              <View style={styles.messageHeader}>
-                <View style={styles.messageInfo}>
-                  <Text style={styles.doctorName}>{message.doctorName}</Text>
-                  <Text style={styles.specialty}>{message.specialty}</Text>
-                </View>
-                <Text style={styles.timestamp}>{message.timestamp}</Text>
-              </View>
-
-              <View style={styles.messageFooter}>
-                <Text
-                  style={[
-                    styles.lastMessage,
-                    message.unread > 0 && styles.lastMessageUnread,
-                  ]}
-                  numberOfLines={1}
+            <Text style={styles.emptyTitle}>Нет сообщений</Text>
+            <Text style={styles.emptySubtitle}>
+              У вас пока нет переписок с врачами.{'\n'}
+              Начните новый чат или обратитесь к AI-врачу.
+            </Text>
+          </View>
+        ) : (
+          messages.map((message) => (
+            <Pressable key={message.id} style={styles.messageCard}>
+              <View style={styles.avatarContainer}>
+                <LinearGradient
+                  colors={['#3772ff', '#2c5bcc']}
+                  style={styles.avatar}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
                 >
-                  {message.lastMessage}
-                </Text>
-                {message.unread > 0 && (
-                  <View style={styles.unreadBadge}>
-                    <Text style={styles.unreadText}>{message.unread}</Text>
-                  </View>
-                )}
+                  <Text style={styles.avatarText}>{message.doctorName.charAt(0)}</Text>
+                </LinearGradient>
+                {message.online && <View style={styles.onlineDot} />}
               </View>
-            </View>
-          </Pressable>
-        ))}
+
+              <View style={styles.messageContent}>
+                <View style={styles.messageHeader}>
+                  <View style={styles.messageInfo}>
+                    <Text style={styles.doctorName}>{message.doctorName}</Text>
+                    <Text style={styles.specialty}>{message.specialty}</Text>
+                  </View>
+                  <Text style={styles.timestamp}>{message.timestamp}</Text>
+                </View>
+
+                <View style={styles.messageFooter}>
+                  <Text
+                    style={[
+                      styles.lastMessage,
+                      message.unread > 0 && styles.lastMessageUnread,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {message.lastMessage}
+                  </Text>
+                  {message.unread > 0 && (
+                    <View style={styles.unreadBadge}>
+                      <Text style={styles.unreadText}>{message.unread}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </Pressable>
+          ))
+        )}
       </ScrollView>
 
       {/* Floating Action Button */}
@@ -358,7 +343,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 20,
     right: 20,
     borderRadius: 28,
     overflow: 'hidden',
@@ -373,5 +358,28 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyIconContainer: {
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

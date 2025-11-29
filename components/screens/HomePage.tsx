@@ -183,69 +183,88 @@ export default function HomePage() {
     { label: 'Сон', value: '7.5', unit: 'часов', icon: 'moon', color: '#8B5CF6' },
   ];
 
-  // Render banner item
+  // Render banner item with 3D effect
   const renderBannerItem = ({ item }: { item: typeof PROMO_BANNERS[0] }) => (
     <View style={styles.bannerItem}>
-      <Image
-        source={item.image}
-        style={styles.bannerImage}
-        resizeMode="cover"
-      />
+      {/* 3D Shadow layers for depth */}
+      <View style={styles.bannerShadowLayer1} />
+      <View style={styles.bannerShadowLayer2} />
+
+      {/* Main banner with gradient overlay for 3D effect */}
+      <View style={styles.bannerWrapper}>
+        <Image
+          source={item.image}
+          style={styles.bannerImage}
+          resizeMode="cover"
+        />
+        {/* Gradient overlay for depth */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.15)']}
+          style={styles.bannerGradientOverlay}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        {/* Light reflection for 3D gloss effect */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+          style={styles.bannerLightReflection}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+      </View>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
-
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#3772ff"
-            colors={['#3772ff']}
-          />
-        }
-      >
-        {/* Header Section */}
-        <Animated.View
-          style={[
-            styles.header,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
+        {/* Premium Hero Header */}
+        <LinearGradient
+          colors={['#3772ff', '#2c5bcc']}
+          style={styles.heroHeader}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
         >
-          {/* <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.greeting}>{greeting}!</Text>
-              <Text style={styles.userName}>{user?.name || 'Пользователь'}</Text>
+          <Animated.View
+            style={[
+              styles.headerContent,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.headerTop}>
+              <View style={styles.greetingContainer}>
+                <Text style={styles.greeting}>{greeting}!</Text>
+                <Text style={styles.userName}>{user?.name || 'Пользователь'}</Text>
+              </View>
+
+              <Pressable onPress={() => router.push('/profile')} style={styles.avatarContainer}>
+                <View style={styles.avatarWrapper}>
+                  <LinearGradient
+                    colors={['#FFFFFF', '#F3F4F6']}
+                    style={styles.avatar}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
+                  </LinearGradient>
+                  <View style={styles.onlineDot} />
+                </View>
+              </Pressable>
             </View>
 
-            <Pressable onPress={() => router.push('/profile')} style={styles.avatarContainer}>
-              <LinearGradient
-                colors={['#3772ff', '#2c5bcc']}
-                style={styles.avatar}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
-              </LinearGradient>
-              <View style={styles.onlineDot} />
+            {/* Search Bar */}
+            <Pressable style={styles.searchBar}>
+              <Ionicons name="search" size={20} color="#6B7280" />
+              <Text style={styles.searchPlaceholder}>Поиск врачей, услуг...</Text>
+              <View style={styles.searchIconRight}>
+                <Ionicons name="options-outline" size={20} color="#6B7280" />
+              </View>
             </Pressable>
-          </View> */}
-
-          {/* Search Bar */}
-          <Pressable style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#9CA3AF" />
-            <Text style={styles.searchPlaceholder}>Поиск врачей, услуг...</Text>
-          </Pressable>
-        </Animated.View>
+          </Animated.View>
+        </LinearGradient>
 
         {/* Promo Banners Carousel */}
         <Animated.View
@@ -312,11 +331,45 @@ export default function HomePage() {
           </View>
         </View>
 
-        {/* Separator Line */}
-        <View style={styles.separator} />
+        {/* Find Clinics Button */}
+        <Animated.View
+          style={[
+            styles.section,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <Pressable
+            style={styles.findClinicsCard}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              routerHook.push('/(tabs)/clinics');
+            }}
+          >
+            <LinearGradient
+              colors={['#3772ff', '#2c5bcc']}
+              style={styles.findClinicsGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.findClinicsIcon}>
+                <Ionicons name="map" size={32} color="#FFFFFF" />
+              </View>
+              <View style={styles.findClinicsContent}>
+                <Text style={styles.findClinicsTitle}>Найти клинику</Text>
+                <Text style={styles.findClinicsText}>
+                  Откройте карту клиник и выберите подходящую
+                </Text>
+              </View>
+              <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
 
         {/* Upcoming Appointments */}
-        <Animated.View
+        {/* <Animated.View
           style={[
             styles.section,
             {
@@ -394,10 +447,10 @@ export default function HomePage() {
               }}
             />
           )}
-        </Animated.View>
+        </Animated.View> */}
 
         {/* Health Stats */}
-        <Animated.View
+        {/* <Animated.View
           style={[
             styles.section,
             {
@@ -419,10 +472,10 @@ export default function HomePage() {
               </View>
             ))}
           </View>
-        </Animated.View>
+        </Animated.View> */}
 
         {/* Services Banner */}
-        <Animated.View
+        {/* <Animated.View
           style={[
             styles.section,
             {
@@ -450,8 +503,7 @@ export default function HomePage() {
               <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
             </LinearGradient>
           </Pressable>
-        </Animated.View>
-      </ScrollView>
+        </Animated.View> */}
     </SafeAreaView>
   );
 }

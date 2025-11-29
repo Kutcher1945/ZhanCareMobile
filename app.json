@@ -11,7 +11,13 @@
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/icons/ios/AppIcon@2x.png",
-      "bundleIdentifier": "com.dylazxc.ZhanCareMobile"
+      "bundleIdentifier": "com.dylazxc.ZhanCareMobile",
+      "config": {
+        "googleMapsApiKey": "AIzaSyCWKpcU0c9HCV2UpuKFDgk8zC_bleRTuJY"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Это приложение использует ваше местоположение для построения маршрутов к клиникам."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +27,16 @@
       },
       "icon": "./assets/icons/android/play_store_512.png",
       "edgeToEdgeEnabled": true,
-      "package": "com.dylazxc.ZhanCareMobile"
+      "package": "com.dylazxc.ZhanCareMobile",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCWKpcU0c9HCV2UpuKFDgk8zC_bleRTuJY"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
